@@ -34,3 +34,6 @@ temp/
 
 # Ignore sensitive files
 /secrets/
+
+# Database
+database.txt

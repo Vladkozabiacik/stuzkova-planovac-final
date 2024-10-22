@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"stuzkova-planovac/internal/adapters/db"
-	httpAdapter "stuzkova-planovac/internal/adapters/http" // Rename the import
+	httpAdapter "stuzkova-planovac/internal/adapters/http"
 	"stuzkova-planovac/internal/config"
 
 	"github.com/gorilla/mux"
@@ -26,8 +26,7 @@ func main() {
 	}
 
 	router := mux.NewRouter()
-	httpAdapter.RegisterRoutes(router, db) // Use the renamed import here
-
+	httpAdapter.RegisterRoutes(router, db)
 	log.Println("Server starting on :8080")
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)

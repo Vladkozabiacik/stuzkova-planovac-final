@@ -13,7 +13,7 @@ document.getElementById('registerForm').addEventListener('submit', async (event)
 
     if (response.ok) {
         alert('Registration successful!');
-        window.location.href = '/dashboard';  // Redirect to dashboard
+        window.location.href = '/dashboard';
     } else {
         alert('Registration failed!');
     }
@@ -33,39 +33,36 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
     });
 
     if (response.ok) {
-        const data = await response.json(); // Assuming the response returns a JSON object
-        const token = data.token; // Get the token from the response
+        const data = await response.json();
+        const token = data.token;
 
-        // Set the token as a cookie
         document.cookie = `jwtToken=${token}; path=/; Secure; SameSite=Strict`;
 
         alert('Login successful!');
-        window.location.href = '/dashboard';  // Redirect to dashboard
+        window.location.href = '/dashboard';
     } else {
         alert('Login failed!');
     }
 });
 
-// Example of how to access the dashboard
 async function accessDashboard() {
-    const token = getCookie('jwtToken'); // Retrieve the token from the cookie
+    const token = getCookie('jwtToken');
     
     const response = await fetch('/dashboard', {
         method: 'GET',
         headers: {
-            'Authorization': `Bearer ${token}` // Include the token in the Authorization header
+            'Authorization': `Bearer ${token}`
         }
     });
 
     if (response.ok) {
-        const dashboardData = await response.text(); // Assuming a simple text response
-        console.log(dashboardData); // Handle the dashboard data
+        const dashboardData = await response.text();
+        console.log(dashboardData);
     } else {
         alert('Failed to access dashboard!');
     }
 }
 
-// Helper function to get a cookie by name
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);

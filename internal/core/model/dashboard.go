@@ -7,13 +7,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Dashboard represents the data structure for the dashboard.
+// create dashboard.html template display and inject it with data based on user
 type Dashboard struct {
 	Role           string `json:"role"`
 	WelcomeMessage string `json:"welcome_message"`
 }
 
-// GetDashboardData generates dashboard data based on the user's role.
 func GetDashboardData(role string) Dashboard {
 	var welcomeMessage string
 
@@ -36,21 +35,16 @@ func GetDashboardData(role string) Dashboard {
 	}
 }
 
-// DashboardHandler handles requests to the dashboard endpoint.
 func DashboardHandler(w http.ResponseWriter, r *http.Request) {
-	// Retrieve the role from the context or request (assuming it's passed as a JWT claim or similar).
-	role := r.Context().Value("role").(string) // Replace with your method of extracting user role
+	role := r.Context().Value("role").(string)
 
-	// Get dashboard data based on user role
 	dashboardData := GetDashboardData(role)
 
-	// Respond with the dashboard data (in JSON format)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(dashboardData)
 }
 
-// RegisterDashboardRoute registers the dashboard route with the provided router.
 func RegisterDashboardRoute(router *mux.Router) {
 	router.HandleFunc("/dashboard", DashboardHandler).Methods("GET")
 }
