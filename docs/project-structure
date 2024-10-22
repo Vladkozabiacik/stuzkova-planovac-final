@@ -1,0 +1,42 @@
+/stuzkova-planovac-login-system
+├──  main.go
+├── /internal
+│   ├── /core
+│   │   ├── /entity
+│   │   │   └── user.go
+│   │   ├── /repository
+│   │   │   └── user_repository.go
+│   │   ├── /service
+│   │   │   └── auth_service.go
+│   │   ├── /dto
+│   │   │   ├── register_dto.go
+│   │   │   └── login_dto.go
+│   │   └── /model
+│   │       └── dashboard.go
+│   ├── /adapters
+│   │   ├── /http
+│   │   │   ├── auth_handler.go
+│   │   │   ├── dashboard_handler.go
+│   │   │   └── routes.go
+│   │   ├── /db
+│   │   │   └── postgres.go
+│   │   └── /middleware
+│   │       └── auth_middleware.go
+│   └── /config
+│       └── config.go
+├── /pkg
+│   ├── /logger
+│   │   └── logger.go
+│   └── /validator
+│       └── validator.go
+├── /static
+│   ├── /css
+│   │   └── styles.css
+│   ├── /js
+│   │   └── app.js
+│   └── /templates
+│       └── index.html
+├── /docs
+├── .env
+├── go.mod
+└── go.sum

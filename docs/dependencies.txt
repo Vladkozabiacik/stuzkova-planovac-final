@@ -1,0 +1,4 @@
+# prikazy
+go mod init stuzkova-planovac
+go mod tidy
+go install github.com/air-verse/air@latest

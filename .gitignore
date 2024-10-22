@@ -1,0 +1,36 @@
+# Go build files
+/bin/
+/obj/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.a
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.iml
+*.swp
+
+# Logs
+*.log
+
+# Environment variable files
+.env
+.env.local
+
+# Build artifacts
+/build/
+dist/
+out/
+
+# Temporary files
+tmp/
+temp/
+
+# Ignore sensitive files
+/secrets/
