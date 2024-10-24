@@ -16,8 +16,10 @@ func RegisterRoutes(router *mux.Router, db *sql.DB) {
 	authHandler := &AuthHandler{AuthService: authService}
 
 	// core
-	router.Handle("/dashboard", middleware.AuthMiddleware(http.HandlerFunc(Dashboard))).Methods("GET")
-
+	router.Handle("/dashboard-data", middleware.AuthMiddleware(http.HandlerFunc(Dashboard))).Methods("GET")
+	router.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/templates/dashboard.html")
+	}).Methods("GET")
 	// auth
 	router.HandleFunc("/register", authHandler.Register).Methods("POST")
 	router.HandleFunc("/login", authHandler.Login).Methods("POST")

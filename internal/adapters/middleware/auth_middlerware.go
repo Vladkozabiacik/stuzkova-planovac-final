@@ -50,7 +50,7 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// jwt toke verification
+// jwt token verification
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var tokenString string

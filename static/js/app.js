@@ -36,7 +36,7 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
         const data = await response.json();
         const token = data.token;
 
-        document.cookie = `jwtToken=${token}; path=/; Secure; SameSite=Strict`;
+        document.cookie = `jwtToken=${token}; path=/; SameSite=Strict`;
 
         alert('Login successful!');
         window.location.href = '/dashboard';

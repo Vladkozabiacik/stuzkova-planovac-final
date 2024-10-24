@@ -1,19 +1,20 @@
 package model
 
 import (
-	"encoding/json"
+	"html/template"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
-// create dashboard.html template display and inject it with data based on user
 type Dashboard struct {
-	Role           string `json:"role"`
-	WelcomeMessage string `json:"welcome_message"`
+	Role           string
+	UserName       string
+	WelcomeMessage string
 }
 
-func GetDashboardData(role string) Dashboard {
+// GetDashboardData returns data for the dashboard page
+func GetDashboardData(role string, username string) Dashboard {
 	var welcomeMessage string
 
 	switch role {
@@ -31,20 +32,35 @@ func GetDashboardData(role string) Dashboard {
 
 	return Dashboard{
 		Role:           role,
+		UserName:       username,
 		WelcomeMessage: welcomeMessage,
 	}
 }
 
+// DashboardHandler renders the dashboard.html template with dynamic data
 func DashboardHandler(w http.ResponseWriter, r *http.Request) {
+	// Retrieve the role and username from the context (you may need to modify this based on how you store user info)
 	role := r.Context().Value("role").(string)
+	username := r.Context().Value("username").(string)
 
-	dashboardData := GetDashboardData(role)
+	// Get the dashboard data based on role and username
+	dashboardData := GetDashboardData(role, username)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dashboardData)
+	// Parse the dashboard.html template
+	tmpl, err := template.ParseFiles("templates/dashboard.html")
+	if err != nil {
+		http.Error(w, "Error loading template", http.StatusInternalServerError)
+		return
+	}
+
+	// Execute the template and inject data
+	err = tmpl.Execute(w, dashboardData)
+	if err != nil {
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	}
 }
 
+// RegisterDashboardRoute registers the dashboard route
 func RegisterDashboardRoute(router *mux.Router) {
 	router.HandleFunc("/dashboard", DashboardHandler).Methods("GET")
 }
