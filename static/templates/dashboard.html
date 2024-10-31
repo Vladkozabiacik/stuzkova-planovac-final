@@ -1,15 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Role}} Dashboard</title>
     <script src="https://unpkg.com/htmx.org@1.9.2"></script>
 </head>
+
 <body>
-    <h1 hx-get="dashboard-data" hx-trigger="load">{{.WelcomeMessage}}</h1>
+    <div hx-get="dashboard-data" hx-trigger="load" hx-on="htmx:responseError"
+        hx-on-error="if (event.detail.xhr.status === 401) { window.location.href = '/'; }">
+    </div>
+    <h1>{{.WelcomeMessage}}</h1>
     <p>Hello, {{.UserName}}!</p>
     <p>You are logged in as a {{.Role}}.</p>
+    <button id="logoutButton">Logout</button>
 
+    <script src="/static/js/logout.js"></script>
 </body>
+
 </html>

@@ -2,12 +2,11 @@ package http
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"stuzkova-planovac/internal/core/dto"
 	"stuzkova-planovac/internal/core/entity"
 	"stuzkova-planovac/internal/core/service"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthHandler struct {
@@ -16,58 +15,57 @@ type AuthHandler struct {
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var registerDTO dto.RegisterDTO
+	log.Printf("Registration attempt received")
 
 	if err := json.NewDecoder(r.Body).Decode(&registerDTO); err != nil {
+		log.Printf("Error decoding registration request: %v", err)
 		http.Error(w, "Invalid input: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	hashedPassword, err := hashPassword(registerDTO.Password)
-	if err != nil {
-		http.Error(w, "Error hashing password: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
+	// Remove password hashing from here - let service handle it
 	user := &entity.User{
 		Username: registerDTO.Username,
-		Password: hashedPassword,
+		Password: registerDTO.Password, // Pass the plain password to service
 		Role:     registerDTO.Role,
 	}
 
 	if err := h.AuthService.Register(user); err != nil {
+		log.Printf("Error registering user: %v", err)
 		http.Error(w, "Registration failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	log.Printf("User registered successfully: %s", registerDTO.Username)
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("User registered successfully"))
+	json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"})
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var loginDTO dto.LoginDTO
+	log.Printf("Login attempt received")
 
 	if err := json.NewDecoder(r.Body).Decode(&loginDTO); err != nil {
+		log.Printf("Error decoding login request: %v", err)
 		http.Error(w, "Invalid input: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// Add debug logging
+	log.Printf("Attempting login for username: %s", loginDTO.Username)
+
 	token, err := h.AuthService.Login(loginDTO.Username, loginDTO.Password)
 	if err != nil {
-		http.Error(w, "Login failed: "+err.Error(), http.StatusUnauthorized)
+		log.Printf("Login failed for user %s: %v", loginDTO.Username, err)
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
 	response := map[string]string{
 		"token": token,
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
-}
-
-func hashPassword(password string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-	return string(hash), nil
+	log.Printf("Login successful for user: %s", loginDTO.Username)
 }

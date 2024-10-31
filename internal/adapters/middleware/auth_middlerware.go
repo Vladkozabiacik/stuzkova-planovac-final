@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -55,38 +56,54 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var tokenString string
 
+		// Log all headers for debugging
+		log.Println("Request headers:")
+		for name, values := range r.Header {
+			log.Printf("%s: %v", name, values)
+		}
+
+		// Check Authorization header
 		authHeader := r.Header.Get("Authorization")
 		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 			tokenString = authHeader[7:]
+			log.Println("Token found in Authorization header:", tokenString)
 		} else {
+			// Check cookie
 			cookie, err := r.Cookie("jwtToken")
 			if err == nil {
 				tokenString = cookie.Value
-
+				log.Println("Token found in cookie:", tokenString)
 				r.Header.Set("Authorization", "Bearer "+tokenString)
 			} else {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-				log.Println("Authorization header missing and cookie not found")
+				log.Printf("Cookie error: %v", err)
+				http.Error(w, "Unauthorized - No token provided", http.StatusUnauthorized)
 				return
 			}
 		}
 
-		// jwt validation
+		// Validate JWT token
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// is HMAC?
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, http.ErrAbortHandler
+				log.Printf("Unexpected signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return []byte("your_jwt_secret"), nil
 		})
 
-		if err != nil || !token.Valid {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			log.Printf("Invalid token: %v", err)
+		if err != nil {
+			log.Printf("Token validation error: %v", err)
+			http.Error(w, "Unauthorized - Invalid token", http.StatusUnauthorized)
 			return
 		}
 
-		log.Println("AuthMiddleware executed")
+		if !token.Valid {
+			log.Println("Token is invalid")
+			http.Error(w, "Unauthorized - Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		// Token is valid, proceed
+		log.Println("Token validation successful")
 		next.ServeHTTP(w, r)
 	})
 }
