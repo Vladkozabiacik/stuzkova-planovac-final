@@ -1,23 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Role}} Dashboard</title>
     <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
-
 <body>
-    <div hx-get="dashboard-data" hx-trigger="load" hx-on="htmx:responseError"
-        hx-on-error="if (event.detail.xhr.status === 401) { window.location.href = '/'; }">
-    </div>
-    <h1>{{.WelcomeMessage}}</h1>
-    <p>Hello, {{.UserName}}!</p>
-    <p>You are logged in as a {{.Role}}.</p>
-    <button id="logoutButton">Logout</button>
+    <!-- TODO: Add NavBar and Footer -->
 
+    <!-- Header with user greeting and logout button -->
+    <header>
+        <h1>{{.WelcomeMessage}}</h1>
+        <p>Hello, {{.UserName}}!</p>
+        <p>You are logged in as a {{.Role}}.</p>
+        <button id="logoutButton" hx-post="/logout" hx-redirect="/" hx-trigger="click">Logout</button>
+    </header>
+
+    <!-- User Profile Section with Update Form -->
+    <section id="profile">
+        <h2>User Profile</h2>
+        <div class="profile-card">
+            <img src="{{.ProfilePicture}}" alt="{{.UserName}}'s profile picture" class="profile-picture">
+            <div class="profile-info">
+                <p><strong>Name:</strong> {{.UserName}}</p>
+                <p><strong>Email:</strong> {{.UserEmail}}</p>
+                <p><strong>Role:</strong> {{.Role}}</p>
+                <p><strong>Bio:</strong> {{.UserBio}}</p>
+            </div>
+            <!-- Update Profile Button -->
+            <button hx-get="/profile/edit" hx-target="#edit-profile-form" hx-trigger="click">Edit Profile</button>
+            
+            <!-- Edit Profile Form (Hidden by default) -->
+            <div id="edit-profile-form"></div> <!-- Fetches form from server when Edit Profile is clicked -->
+        </div>
+    </section>
+
+    <!-- Dashboard Data Section -->
+    <section id="dashboard-data" 
+             hx-get="/dashboard-data" 
+             hx-trigger="load" 
+             hx-target="#dashboard-data" 
+             hx-swap="innerHTML"
+             hx-on="htmx:responseError" 
+             hx-on-error="if (event.detail.xhr.status === 401) { window.location.href = '/'; }">
+        <!-- Data from the server will be dynamically loaded here on page load -->
+        <p>Loading dashboard data...</p>
+    </section>
+
+    <!-- User Occasions Section with CRUD Functionality -->
+    <section id="occasions"
+             hx-get="/occasions" 
+             hx-trigger="load" 
+             hx-target="#occasions" 
+             hx-swap="innerHTML">
+        <h2>Participating Occasions</h2>
+        
+        <!-- Button to Add a New Occasion -->
+        <button hx-get="/occasions/new" hx-target="#new-occasion-form" hx-trigger="click">Add New Occasion</button>
+        
+        <!-- New Occasion Form (Hidden by default) -->
+        <div id="new-occasion-form"></div> <!-- Fetches form from server when Add New Occasion is clicked -->
+
+        <!-- List of Occasions loaded dynamically -->
+        <ul>
+            <li>Loading your occasions...</li> <!-- Placeholder message shown until data is loaded -->
+        </ul>
+    </section>
+
+    <!-- Logout Script -->
     <script src="/static/js/logout.js"></script>
 </body>
-
 </html>

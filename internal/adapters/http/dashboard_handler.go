@@ -10,7 +10,7 @@ import (
 
 func Dashboard(w http.ResponseWriter, r *http.Request) {
 	authHeader := r.Header.Get("Authorization")
-	log.Println(authHeader)
+	// log.Println(authHeader)
 
 	if !strings.HasPrefix(authHeader, "Bearer ") {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -33,7 +33,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		role := claims["role"].(string)
 
-		log.Printf("Processing role: %s\n", role)
+		// log.Printf("Processing role: %s\n", role)
 
 		// add template for dashboard and inject it with data based on user + his roles
 		// important stuff, GDPR data accessibility, ...

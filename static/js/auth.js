@@ -1,4 +1,4 @@
-// Registration Handler
+// Register form handler
 document.getElementById('registerForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const username = document.getElementById('registerUsername').value;
@@ -13,20 +13,18 @@ document.getElementById('registerForm').addEventListener('submit', async (event)
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({ username, password })
         });
 
-        console.log('Registration response status:', response.status);
-
         if (response.ok) {
             const data = await response.json();
-            console.log('Registration successful:', data);
             alert('Registration successful! Please login.');
             document.getElementById('registerForm').reset();
         } else {
-            const errorText = await response.text();
-            console.error('Registration failed:', errorText);
-            alert(`Registration failed: ${errorText}`);
+            const errorData = await response.json().catch(() => response.text());
+            const errorMessage = errorData.error || errorData;
+            alert(`Registration failed: ${errorMessage}`);
         }
     } catch (error) {
         console.error('Registration error:', error);
@@ -34,7 +32,7 @@ document.getElementById('registerForm').addEventListener('submit', async (event)
     }
 });
 
-// Login Handler
+// Login form handler
 document.getElementById('loginForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const username = document.getElementById('loginUsername').value;
@@ -55,17 +53,21 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
 
         if (response.ok) {
             const data = await response.json();
-            console.log('Login successful:', data);
             
-            const token = data.token;
-            document.cookie = `jwtToken=${token}; path=/; SameSite=Strict`;
-            
-            alert('Login successful!');
-            window.location.href = '/dashboard';
+            if (data.token) {
+                // Store token in both cookie and localStorage for redundancy
+                document.cookie = `jwtToken=${data.token}; path=/; SameSite=Strict; secure`;
+                localStorage.setItem('jwtToken', data.token);
+                
+                window.location.href = '/dashboard';
+            } else {
+                throw new Error('No token received from server');
+            }
         } else {
-            const errorText = await response.text();
-            console.error('Login failed:', errorText);
-            alert(`Login failed: ${errorText}`);
+            const errorData = await response.json().catch(() => response.text());
+            const errorMessage = errorData.error || errorData;
+            console.error('Login failed:', errorMessage);
+            alert(`Login failed: ${errorMessage}`);
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -73,25 +75,45 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
     }
 });
 
-// Access Dashboard Function
+// Dashboard access function
 async function accessDashboard() {
-    const token = getCookie('jwtToken');
+    const token = getCookie('jwtToken') || localStorage.getItem('jwtToken');
+
+    if (!token) {
+        console.log('No token found, redirecting to login');
+        window.location.href = '/';
+        return;
+    }
 
     try {
-        const response = await fetch('/dashboard', {
+        const response = await fetch('http://127.0.0.1:8080/dashboard', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Cache-Control': 'no-cache'
-            }
+            },
+            credentials: 'include'
         });
 
         if (response.ok) {
-            window.location.href = '/dashboard';
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                // Handle JSON response
+                console.log('Dashboard data:', data);
+            } else {
+                // Handle HTML response
+                const html = await response.text();
+                document.documentElement.innerHTML = html;
+            }
         } else if (response.status === 401) {
+            console.log('Unauthorized, clearing tokens');
+            // Clear both cookie and localStorage
             document.cookie = 'jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            localStorage.removeItem('jwtToken');
+            window.location.href = '/';
         } else {
-            alert('Failed to access dashboard!');
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
     } catch (error) {
         console.error('Error accessing dashboard:', error);
@@ -99,13 +121,28 @@ async function accessDashboard() {
     }
 }
 
-
+// Enhanced cookie getter
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
+    if (parts.length === 2) {
+        const cookieValue = parts.pop().split(';').shift();
+        return cookieValue || null;
+    }
+    return null;
 }
 
+// Initialize dashboard access on page load
 document.addEventListener('DOMContentLoaded', () => {
-    accessDashboard();
+    const currentPath = window.location.pathname;
+    if (currentPath === '/dashboard') {
+        accessDashboard();
+    }
 });
+
+// Add logout functionality
+function logout() {
+    document.cookie = 'jwtToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    localStorage.removeItem('jwtToken');
+    window.location.href = '/';
+}

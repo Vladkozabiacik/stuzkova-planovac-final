@@ -1,18 +1,23 @@
 body {
     font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
 }
 
 .container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     max-width: 600px;
-    margin: auto;
+    width: 100%;
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 5px;
+    box-sizing: border-box;
 }
 
-form {
-    margin-bottom: 20px;
-}
 
 input {
     width: 100%;
@@ -20,6 +25,7 @@ input {
     margin: 5px 0;
     border: 1px solid #ccc;
     border-radius: 5px;
+    box-sizing: border-box;
 }
 
 button {
@@ -33,4 +39,23 @@ button {
 
 button:hover {
     background-color: #4cae4c;
+}
+
+.form-hidden {
+    display: none;
+}
+
+.toggle-text {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #333;
+}
+
+.toggle-text a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.toggle-text a:hover {
+    text-decoration: underline;
 }

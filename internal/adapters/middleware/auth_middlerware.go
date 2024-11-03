@@ -14,12 +14,19 @@ import (
 // CORS zlo
 func CORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Set CORS headers
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+		// Set specific origin instead of wildcard
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			origin = "http://localhost:8080" // fallback
+		}
 
-		// preflight request
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Max-Age", "3600")
+
+		// Handle preflight requests
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -57,22 +64,24 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		var tokenString string
 
 		// Log all headers for debugging
-		log.Println("Request headers:")
-		for name, values := range r.Header {
-			log.Printf("%s: %v", name, values)
-		}
+		/*
+			log.Println("Request headers:")
+			for name, values := range r.Header {
+				log.Printf("%s: %v", name, values)
+			}
+		*/
 
 		// Check Authorization header
 		authHeader := r.Header.Get("Authorization")
 		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 			tokenString = authHeader[7:]
-			log.Println("Token found in Authorization header:", tokenString)
+			// log.Println("Token found in Authorization header:", tokenString)
 		} else {
 			// Check cookie
 			cookie, err := r.Cookie("jwtToken")
 			if err == nil {
 				tokenString = cookie.Value
-				log.Println("Token found in cookie:", tokenString)
+				// log.Println("Token found in cookie:", tokenString)
 				r.Header.Set("Authorization", "Bearer "+tokenString)
 			} else {
 				log.Printf("Cookie error: %v", err)
@@ -103,7 +112,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Token is valid, proceed
-		log.Println("Token validation successful")
+		// log.Println("Token validation successful")
 		next.ServeHTTP(w, r)
 	})
 }
