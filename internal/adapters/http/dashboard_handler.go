@@ -1,6 +1,8 @@
+// dashboard_handler.go
 package http
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
@@ -8,54 +10,88 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func Dashboard(w http.ResponseWriter, r *http.Request) {
-	authHeader := r.Header.Get("Authorization")
-	// log.Println(authHeader)
+type DashboardResponse struct {
+	User     UserData     `json:"user"`
+	Metadata MetadataInfo `json:"metadata"`
+}
 
+type UserData struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+	Bio      string `json:"bio"`
+}
+
+type MetadataInfo struct {
+	WelcomeMessage string   `json:"welcomeMessage"`
+	Permissions    []string `json:"permissions"`
+}
+
+// DashboardData serves the JSON data for the dashboard.
+func DashboardData(w http.ResponseWriter, r *http.Request) {
+	// Add security headers
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("X-Frame-Options", "DENY")
+
+	authHeader := r.Header.Get("Authorization")
 	if !strings.HasPrefix(authHeader, "Bearer ") {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		log.Println("Authorization header missing or doesn't start with Bearer")
 		return
 	}
 
-	tokenString := authHeader[7:]
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	claims := jwt.MapClaims{}
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte("your_jwt_secret"), nil
 	})
 
 	if err != nil || !token.Valid {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		log.Printf("Failed to parse or invalid token: %v\n", err)
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		role := claims["role"].(string)
+	username, _ := claims["username"].(string)
 
-		// log.Printf("Processing role: %s\n", role)
-
-		// add template for dashboard and inject it with data based on user + his roles
-		// important stuff, GDPR data accessibility, ...
-		switch role {
-		case "student":
-			log.Println("Student dashboard accessed")
-			w.Write([]byte("Welcome Student!"))
-		case "teacher":
-			log.Println("Teacher dashboard accessed")
-			w.Write([]byte("Welcome Teacher!"))
-		case "parent":
-			log.Println("Parent dashboard accessed")
-			w.Write([]byte("Welcome Parent!"))
-		case "guest":
-			log.Println("Guest dashboard accessed")
-			w.Write([]byte("Welcome Guest!"))
-		default:
-			log.Printf("Unauthorized role: %s\n", role)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		}
-	} else {
-		log.Println("Failed to extract claims from token")
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	// Construct response
+	response := DashboardResponse{
+		User: UserData{
+			Username: username,
+		},
 	}
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Error encoding response: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func getWelcomeMessage(role string) string {
+	messages := map[string]string{
+		"student": "Welcome to the Student Dashboard!",
+		"teacher": "Welcome to the Teacher Dashboard!",
+		"parent":  "Welcome to the Parent Dashboard!",
+		"guest":   "Welcome to the Guest Dashboard!",
+	}
+
+	if msg, ok := messages[role]; ok {
+		return msg
+	}
+	return "Welcome!"
+}
+
+func getRolePermissions(role string) []string {
+	permissions := map[string][]string{
+		"student": {"view_profile", "edit_profile", "view_occasions"},
+		"teacher": {"view_profile", "edit_profile", "manage_occasions", "view_students"},
+		"parent":  {"view_profile", "view_occasions"},
+		"guest":   {"view_profile"},
+	}
+
+	if perms, ok := permissions[role]; ok {
+		return perms
+	}
+	return []string{"view_profile"}
 }

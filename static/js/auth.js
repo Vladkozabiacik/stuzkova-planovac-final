@@ -2,6 +2,7 @@
 document.getElementById('registerForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const username = document.getElementById('registerUsername').value;
+    const email = document.getElementById('registerEmail').value; // Extract email value
     const password = document.getElementById('registerPassword').value;
 
     try {
@@ -14,7 +15,7 @@ document.getElementById('registerForm').addEventListener('submit', async (event)
                 'Accept': 'application/json'
             },
             credentials: 'include',
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, email, password }) // Include email in the request body
         });
 
         if (response.ok) {

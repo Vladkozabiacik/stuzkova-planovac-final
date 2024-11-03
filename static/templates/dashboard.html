@@ -1,75 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Role}} Dashboard</title>
+    <title>Dashboard</title>
     <script src="https://unpkg.com/htmx.org@1.9.2"></script>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
-<body>
-    <!-- TODO: Add NavBar and Footer -->
 
-    <!-- Header with user greeting and logout button -->
+<body>
     <header>
-        <h1>{{.WelcomeMessage}}</h1>
-        <p>Hello, {{.UserName}}!</p>
-        <p>You are logged in as a {{.Role}}.</p>
+        <h1 id="welcome-message">Welcome!</h1>
+        <p>Hello, <span id="username"></span>!</p>
+        <p>You are logged in as a <span id="role"></span>.</p>
         <button id="logoutButton" hx-post="/logout" hx-redirect="/" hx-trigger="click">Logout</button>
     </header>
 
-    <!-- User Profile Section with Update Form -->
     <section id="profile">
         <h2>User Profile</h2>
         <div class="profile-card">
-            <img src="{{.ProfilePicture}}" alt="{{.UserName}}'s profile picture" class="profile-picture">
+            <img id="profile-picture" src="" alt="Profile picture" class="profile-picture">
             <div class="profile-info">
-                <p><strong>Name:</strong> {{.UserName}}</p>
-                <p><strong>Email:</strong> {{.UserEmail}}</p>
-                <p><strong>Role:</strong> {{.Role}}</p>
-                <p><strong>Bio:</strong> {{.UserBio}}</p>
+                <p><strong>Name:</strong> <span id="profile-username"></span></p>
+                <p><strong>Email:</strong> <span id="profile-email"></span></p>
+                <p><strong>Role:</strong> <span id="profile-role"></span></p>
+                <p><strong>Bio:</strong> <span id="profile-bio"></span></p>
             </div>
-            <!-- Update Profile Button -->
             <button hx-get="/profile/edit" hx-target="#edit-profile-form" hx-trigger="click">Edit Profile</button>
-            
-            <!-- Edit Profile Form (Hidden by default) -->
-            <div id="edit-profile-form"></div> <!-- Fetches form from server when Edit Profile is clicked -->
+            <div id="edit-profile-form"></div>
         </div>
     </section>
 
-    <!-- Dashboard Data Section -->
-    <section id="dashboard-data" 
-             hx-get="/dashboard-data" 
-             hx-trigger="load" 
-             hx-target="#dashboard-data" 
-             hx-swap="innerHTML"
-             hx-on="htmx:responseError" 
-             hx-on-error="if (event.detail.xhr.status === 401) { window.location.href = '/'; }">
-        <!-- Data from the server will be dynamically loaded here on page load -->
-        <p>Loading dashboard data...</p>
-    </section>
+    <div id="dashboard-data" hx-trigger="dashboardDataLoaded" hx-target="#dashboard-data">
+        <div class="loading-indicator">Loading dashboard data...</div>
+    </div>
 
-    <!-- User Occasions Section with CRUD Functionality -->
-    <section id="occasions"
-             hx-get="/occasions" 
-             hx-trigger="load" 
-             hx-target="#occasions" 
-             hx-swap="innerHTML">
-        <h2>Participating Occasions</h2>
-        
-        <!-- Button to Add a New Occasion -->
-        <button hx-get="/occasions/new" hx-target="#new-occasion-form" hx-trigger="click">Add New Occasion</button>
-        
-        <!-- New Occasion Form (Hidden by default) -->
-        <div id="new-occasion-form"></div> <!-- Fetches form from server when Add New Occasion is clicked -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Retrieve the JWT token from either cookies or localStorage
+            const token = getCookie('jwtToken') || localStorage.getItem('jwtToken');
+    
+            // If there's no token, redirect to the login page
+            if (!token) {
+                console.log('No token found, redirecting to login');
+                window.location.href = '/';
+                return;
+            }
+    
+            try {
+                // Send the token with the fetch request in the Authorization header
+                const response = await fetch('/dashboard-data', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(data);
+    
+                    // Populate the DOM elements with the fetched data
+                    document.getElementById('welcome-message').innerText = data.metadata.welcomeMessage || "Welcome!";
+                    document.getElementById('username').innerText = data.user.username || "User";
+                    document.getElementById('role').innerText = data.user.role || "Role";
+                    document.getElementById('profile-username').innerText = data.user.username || "Username";
+                    document.getElementById('profile-email').innerText = data.user.email || "Email";
+                    document.getElementById('profile-role').innerText = data.user.role || "Role";
+                    document.getElementById('profile-bio').innerText = data.user.bio || "No bio available.";
+                } else {
+                    console.error("Failed to fetch dashboard data. Status:", response.status);
+                }
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+            }
+        });
+    
+        // Helper function to retrieve cookies by name
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) {
+                const cookieValue = parts.pop().split(';').shift();
+                return cookieValue || null;
+            }
+            return null;
+        }
+    </script>
+    
 
-        <!-- List of Occasions loaded dynamically -->
-        <ul>
-            <li>Loading your occasions...</li> <!-- Placeholder message shown until data is loaded -->
-        </ul>
-    </section>
-
-    <!-- Logout Script -->
     <script src="/static/js/logout.js"></script>
 </body>
+
 </html>

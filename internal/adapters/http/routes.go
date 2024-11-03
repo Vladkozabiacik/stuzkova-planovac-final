@@ -62,7 +62,7 @@ func registerProtectedRoutes(router *mux.Router) {
 	}).Methods("GET")
 	// TODO: add functions for these routes
 	// // Fetch dashboard data dynamically
-	// protected.HandleFunc("/dashboard-data", DashboardData).Methods("GET")
+	protected.HandleFunc("/dashboard-data", DashboardData).Methods("GET")
 
 	// // Profile routes
 	// protected.HandleFunc("/profile", HandleProfile).Methods("GET", "PUT", "OPTIONS")

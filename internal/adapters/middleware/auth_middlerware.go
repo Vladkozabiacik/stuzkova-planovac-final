@@ -17,7 +17,7 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		// Set specific origin instead of wildcard
 		origin := r.Header.Get("Origin")
 		if origin == "" {
-			origin = "http://localhost:8080" // fallback
+			origin = "http://localhost:8080"
 		}
 
 		w.Header().Set("Access-Control-Allow-Origin", origin)

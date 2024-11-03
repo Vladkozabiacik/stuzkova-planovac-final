@@ -23,9 +23,10 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Remove password hashing from here - let service handle it
+	// Create user with email
 	user := &entity.User{
 		Username: registerDTO.Username,
+		Email:    registerDTO.Email,    // Include email in the user entity
 		Password: registerDTO.Password, // Pass the plain password to service
 		Role:     registerDTO.Role,
 	}
